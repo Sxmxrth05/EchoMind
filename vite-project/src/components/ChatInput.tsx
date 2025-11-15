@@ -1,19 +1,114 @@
 // src/components/ChatInput.tsx
-import { useState } from "react";
-import { Send, Settings } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Send, Settings, Mic, MicOff } from "lucide-react";
+
+// Speech Recognition Types
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence?: number;
+}
+
+interface SpeechRecognitionResult {
+  0: SpeechRecognitionAlternative;
+  isFinal: boolean;
+  length: number;
+  item(index: number): SpeechRecognitionAlternative;
+}
+
+interface SpeechRecognitionResultList {
+  [index: number]: SpeechRecognitionResult;
+  length: number;
+  item(index: number): SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionEvent extends Event {
+  readonly results: SpeechRecognitionResultList;
+  readonly resultIndex: number;
+}
+
+interface SpeechRecognition extends EventTarget {
+  lang: string;
+  interimResults: boolean;
+  continuous: boolean;
+  onresult: ((event: SpeechRecognitionEvent) => any) | null;
+  onend: (() => any) | null;
+  start(): void;
+  stop(): void;
+  abort(): void;
+}
+
+declare var SpeechRecognition: {
+  prototype: SpeechRecognition;
+  new (): SpeechRecognition;
+};
+
+declare var webkitSpeechRecognition: {
+  prototype: SpeechRecognition;
+  new (): SpeechRecognition;
+};
 
 interface ChatInputProps {
   inputText: string;
   setInputText: (value: string) => void;
   handleSendMessage: () => void;
+  onShowEmotionMap?: () => void;
 }
 
 const ChatInput: React.FC<ChatInputProps> = ({
   inputText,
   setInputText,
   handleSendMessage,
+  onShowEmotionMap,
 }) => {
   const [showToolsDropdown, setShowToolsDropdown] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+  // Initialize Speech Recognition
+  useEffect(() => {
+    const SpeechRecognitionAPI =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognitionAPI) {
+      console.warn("Speech Recognition not supported in this browser");
+      return;
+    }
+
+    const recognition = new SpeechRecognitionAPI();
+    recognition.lang = "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = true;
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = Array.from(event.results)
+        .map((result) => result[0].transcript)
+        .join("");
+      setInputText(transcript);
+    };
+
+    recognition.onend = () => {
+      if (isListening) {
+        recognition.start();
+      }
+    };
+
+    recognitionRef.current = recognition;
+
+    return () => {
+      recognition.stop();
+    };
+  }, [isListening, setInputText]);
+
+  const toggleListening = () => {
+    if (isListening) {
+      setIsListening(false);
+      recognitionRef.current?.stop();
+    } else {
+      setIsListening(true);
+      recognitionRef.current?.start();
+    }
+  };
 
   return (
     <div
@@ -21,6 +116,33 @@ const ChatInput: React.FC<ChatInputProps> = ({
       style={{ borderColor: "#E0E0E0" }}
     >
       <div className="max-w-4xl mx-auto flex gap-3">
+        {/* Microphone button for speech-to-text */}
+        <button
+          onClick={toggleListening}
+          className={`px-4 py-3 rounded-lg border font-medium transition-colors flex items-center justify-center ${
+            isListening ? "animate-pulse" : ""
+          }`}
+          style={{
+            backgroundColor: isListening ? "#FF5722" : "#00796B",
+            color: "white",
+            borderColor: isListening ? "#FF5722" : "#00796B",
+            minWidth: "52px",
+          }}
+          onMouseEnter={(e) => {
+            if (!isListening) {
+              e.currentTarget.style.backgroundColor = "#00695C";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isListening) {
+              e.currentTarget.style.backgroundColor = "#00796B";
+            }
+          }}
+          title={isListening ? "Stop listening" : "Start voice input"}
+        >
+          {isListening ? <MicOff size={20} /> : <Mic size={20} />}
+        </button>
+
         {/* Tools dropdown button positioned left of input */}
         <div className="relative">
           <button
@@ -38,7 +160,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
               e.currentTarget.style.backgroundColor = "#00796B";
             }}
           >
-            <Settings size={16} />
+            <Settings size={20} />
             Tools
           </button>
 
@@ -67,7 +189,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
                 </button>
                 <button
                   onClick={() => {
-                    console.log("Emotional Map clicked");
+                    onShowEmotionMap?.();
                     setShowToolsDropdown(false);
                   }}
                   className="w-full text-left px-4 py-2 transition-colors"

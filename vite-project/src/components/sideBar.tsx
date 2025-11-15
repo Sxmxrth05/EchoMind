@@ -12,6 +12,7 @@ interface SidebarProps {
   history: JournalItem[];
   activeId?: number;
   onJournalSelect?: (journalId: number) => void;
+  onNewJournal?: () => void;
 }
 
 function Sidebar({
@@ -20,6 +21,7 @@ function Sidebar({
   history,
   activeId,
   onJournalSelect,
+  onNewJournal,
 }: SidebarProps) {
   return (
     <div
@@ -67,6 +69,7 @@ function Sidebar({
 
       {/* New Journal Button - Deep Teal accent */}
       <button
+        onClick={() => onNewJournal?.()}
         className={`
           flex items-center border-none rounded-lg p-3 my-4 cursor-pointer text-base
           whitespace-nowrap text-white transition-colors

@@ -6,6 +6,7 @@ export interface Message {
   id: number;
   text: string;
   sender: "user" | "ai";
+  isLoading?: boolean;
 }
 
 interface MessageListProps {
@@ -31,7 +32,35 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
                 color: "#37474F",
               }}
             >
-              <p className="text-base leading-relaxed">{message.text}</p>
+              {message.isLoading ? (
+                <div className="flex items-center space-x-2">
+                  <div className="flex space-x-1">
+                    <div
+                      className="w-2 h-2 rounded-full animate-bounce"
+                      style={{
+                        backgroundColor: "#37474F",
+                        animationDelay: "0ms",
+                      }}
+                    ></div>
+                    <div
+                      className="w-2 h-2 rounded-full animate-bounce"
+                      style={{
+                        backgroundColor: "#37474F",
+                        animationDelay: "150ms",
+                      }}
+                    ></div>
+                    <div
+                      className="w-2 h-2 rounded-full animate-bounce"
+                      style={{
+                        backgroundColor: "#37474F",
+                        animationDelay: "300ms",
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-base leading-relaxed">{message.text}</p>
+              )}
             </div>
           </div>
         ))}

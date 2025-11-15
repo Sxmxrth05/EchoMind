@@ -3,7 +3,8 @@ import { type Message } from "../components/MessageList";
 
 // localStorage keys
 const JOURNALS_KEY = "echomind_journals";
-const JOURNAL_MESSAGES_KEY = (journalId: number) => `echomind_messages_${journalId}`;
+const JOURNAL_MESSAGES_KEY = (journalId: number) =>
+  `echomind_messages_${journalId}`;
 const ACTIVE_JOURNAL_KEY = "echomind_active_journal";
 
 // Initialize default journals
@@ -26,7 +27,10 @@ export const journalStorage = {
     return stored ? JSON.parse(stored) : [];
   },
   saveMessages: (journalId: number, messages: Message[]) => {
-    localStorage.setItem(JOURNAL_MESSAGES_KEY(journalId), JSON.stringify(messages));
+    localStorage.setItem(
+      JOURNAL_MESSAGES_KEY(journalId),
+      JSON.stringify(messages)
+    );
   },
   getActiveJournal: (): number => {
     const stored = localStorage.getItem(ACTIVE_JOURNAL_KEY);

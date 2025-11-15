@@ -1,11 +1,17 @@
 // src/components/ChatHeader.tsx
+import { User } from "lucide-react";
+import { useState } from "react";
 // import { UserButton } from "@clerk/clerk-react";
 
 interface ChatHeaderProps {
   title?: string;
+  username?: string;
+  email?: string;
 }
 
-function ChatHeader({ title = "Journal Chat" }: ChatHeaderProps) {
+function ChatHeader({ title = "Journal Chat", username = "John Doe", email = "john.doe@example.com" }: ChatHeaderProps) {
+  const [showUserInfo, setShowUserInfo] = useState(false);
+
   return (
     <div
       className="h-16 flex items-center justify-between px-8 border-b flex-shrink-0"
@@ -17,8 +23,28 @@ function ChatHeader({ title = "Journal Chat" }: ChatHeaderProps) {
 
       {/* TEMP: Auth disabled for development */}
       <div className="flex items-center space-x-3">
-        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
-          JD
+        <div 
+          className="relative"
+          onMouseEnter={() => setShowUserInfo(true)}
+          onMouseLeave={() => setShowUserInfo(false)}
+        >
+          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 cursor-pointer hover:bg-gray-300 transition-colors">
+            <User size={20} />
+          </div>
+          
+          {/* User Info Tooltip */}
+          {showUserInfo && (
+            <div 
+              className="absolute right-0 top-12 bg-white border rounded-lg shadow-lg p-3 z-10"
+              style={{ 
+                borderColor: "#E0E0E0",
+                minWidth: "200px"
+              }}
+            >
+              <p className="text-sm font-semibold text-gray-800">{username}</p>
+              <p className="text-xs text-gray-600 mt-1">{email}</p>
+            </div>
+          )}
         </div>
         <button
           onClick={() => {
