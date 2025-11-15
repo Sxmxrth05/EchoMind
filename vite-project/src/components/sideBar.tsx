@@ -11,9 +11,16 @@ interface SidebarProps {
   toggle: () => void;
   history: JournalItem[];
   activeId?: number;
+  onJournalSelect?: (journalId: number) => void;
 }
 
-function Sidebar({ isOpen, toggle, history, activeId }: SidebarProps) {
+function Sidebar({
+  isOpen,
+  toggle,
+  history,
+  activeId,
+  onJournalSelect,
+}: SidebarProps) {
   return (
     <div
       className={`
@@ -96,6 +103,7 @@ function Sidebar({ isOpen, toggle, history, activeId }: SidebarProps) {
           {history.map((item) => (
             <li
               key={item.id}
+              onClick={() => onJournalSelect?.(item.id)}
               className={`
                 flex items-center p-3 my-1 rounded-lg cursor-pointer font-medium
                 whitespace-nowrap transition-colors
