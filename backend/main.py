@@ -54,7 +54,7 @@ def _call_gemini(prompt: str, model: str | None = None):
     if not genai:
         raise RuntimeError("Gemini SDK not installed")
 
-    model_name = model or os.getenv("GEMINI_MODEL") or "gemini-1.5-flash"
+    model_name = model or os.getenv("GEMINI_MODEL") or "gemini-2.5-flash"
 
     try:
         m = genai.GenerativeModel(model_name)
@@ -78,6 +78,17 @@ def extract_gemini_text(resp):
 class EchoRequest(BaseModel):
 	payload: Dict[str, Any]
 
+
+class User(BaseModel):
+	name: str
+	email: str
+	password: str
+	age: int
+
+
+@app.post("/login", summary="Login page")
+async def login(user: User, request: Request):
+	pass
 
 @app.get("/api/health", summary="Health check")
 async def health():
