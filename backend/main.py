@@ -7,6 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+import json
+from collections import Counter
 
 try:
 	import google.generativeai as genai
@@ -15,7 +17,7 @@ except Exception:
 
 from prompt_builder import build_prompt
 from dotenv import load_dotenv
-from database import insert_user, fetch_user, login_email
+from database import insert_user, fetch_user, login_email, insert_emotion_log, fetch_emotions_by_user
 
 load_dotenv()
 
@@ -64,16 +66,17 @@ def _call_gemini(prompt: str, model: str | None = None):
         raise RuntimeError(f"Gemini call failed: {e}")
 
 def extract_gemini_text(resp):
-    if hasattr(resp, "text"):
-        return {"echo": resp.text}
-    if hasattr(resp, "candidates"):
-        try:
-            parts = resp.candidates[0].content.parts
-            return {"echo": "".join(p.text for p in parts if hasattr(p, "text"))}
-        except Exception:
-            pass
+	if hasattr(resp, "text"):
+		return {"echo": resp.text}
+	if hasattr(resp, "candidates"):
+		try:
+			parts = resp.candidates[0].content.parts
+			print(parts)
+			return {"echo": "".join(p.text for p in parts if hasattr(p, "text"))}
+		except Exception:
+			pass
 
-    raise HTTPException(status_code=502, detail="Unexpected Gemini response shape")
+	raise HTTPException(status_code=502, detail="Unexpected Gemini response shape")
 
 def get_emotion(text: str):
 	json_prompt = f"""
@@ -150,14 +153,18 @@ async def echo(req: EchoRequest, request: Request):
 		logger.exception("Error building prompt")
 		raise HTTPException(status_code=500, detail="Prompt build failed")
 
-	logger.info("Calling Gemini with prompt: %s", prompt)
+	logger.info("Calling Gemini with prompt")
 
 	try:
 		resp = _call_gemini(prompt)
 		logger.info("Gemini raw response: %s", resp)
 		response = extract_gemini_text(resp=resp)
 		emotion = get_emotion(req.payload['query'])
-		print(emotion)
+		em_json = emotion.candidates[0].content.parts[0].text
+		c_str = em_json.replace("json", "").strip()
+		clean = c_str.strip("` \n")
+		data = json.loads(clean)
+		insert_emotion_log(req.payload['Clerk_Session_Id'], data)
 		return {"echo": response}
 	except RuntimeError as e:
 		logger.exception("Gemini runtime error")
@@ -166,8 +173,15 @@ async def echo(req: EchoRequest, request: Request):
 		logger.exception("Unexpected error while calling Gemini")
 		raise HTTPException(status_code=500, detail="Internal server error")
 
-# @app.get("/emotionmap", summary="Returns emotion map for user-id")
-# async def emotionmap()
+@app.get("/emotionmap", summary="Returns emotion map for user-id")
+async def emotionmap(Clerk_Session_Id: str):
+	emotions = fetch_emotions_by_user(Clerk_Session_Id)
+
+	emotion_list = [row["emotion_key"]["emotion"] for row in emotions]
+	emotion_counts = Counter(emotion_list)
+
+	return dict(emotion_counts)
+
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
