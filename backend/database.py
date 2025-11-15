@@ -33,6 +33,15 @@ def fetch_user(user_id):
     )
     return result.data
 
+def login_email(email):
+    res = (
+        supabase.table(TABLE_NAME)
+        .select("*")
+        .eq("Email_id", email)
+        .execute()
+    )
+    return res.data
+
 if __name__ == "__main__":
    
     user = fetch_user("24856171-1aa9-43bf-b36a-9e43c4e65dca")

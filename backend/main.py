@@ -15,6 +15,7 @@ except Exception:
 
 from prompt_builder import build_prompt
 from dotenv import load_dotenv
+from database import insert_user, fetch_user, login_email
 
 load_dotenv()
 
@@ -85,30 +86,44 @@ class User(BaseModel):
 	password: str
 	age: int
 
+class Login(BaseModel):
+	email: str
+	password: str
+
+
+@app.post("/register", summary="Register page")
+async def register(user: User, request: Request):
+	try:
+		resp = insert_user(
+			name=user.name,
+			emailid=user.email,
+			password=user.password,
+			age=user.age
+        )
+		return resp
+	except Exception as e:
+		logger.exception("Error while uploading code")
+		raise HTTPException(status_code=500, detail="Could not insert user into database")
 
 @app.post("/login", summary="Login page")
-async def login(user: User, request: Request):
-	pass
-
-@app.get("/api/health", summary="Health check")
-async def health():
-	return {"status": "ok"}
-
-
-@app.get("/api/echo/mock", summary="Mock echo (hard-coded)")
-async def echo_mock():
-	return {"message": "this is a mock response", "data": {"example": 1}}
+async def login(loginDetails: Login, request: Request):
+    resp = login_email(loginDetails.email)
+    if(resp[0]['Password'] == loginDetails.password):
+        return resp
+    else:
+        raise HTTPException(
+                status_code=401,
+                detail="Invalid username or password",
+        )
 
 
-@app.post("/api/echo", summary="Echo endpoint (mock if no OpenAI key)")
+
+@app.post("/echo", summary="Echo endpoint (mock if no OpenAI key)")
 async def echo(req: EchoRequest, request: Request):
 	#Dummy output without api call
 	if not GEMINI_KEY or not genai:
 		logger.info("Gemini key/SDK not available — returning mock response")
 		return {"echo": {"mock": True, "received": req.payload}}
-
-
-    #Actual output part, prompt has to be given from AI lead
 	try:
 		prompt = build_prompt(req.payload)
 	except Exception as e:
@@ -129,6 +144,8 @@ async def echo(req: EchoRequest, request: Request):
 		logger.exception("Unexpected error while calling Gemini")
 		raise HTTPException(status_code=500, detail="Internal server error")
 
+@app.get("/emotionmap", summary="Returns emotion map for user-id")
+async def emotionmap()
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
