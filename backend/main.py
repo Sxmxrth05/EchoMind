@@ -75,6 +75,26 @@ def extract_gemini_text(resp):
 
     raise HTTPException(status_code=502, detail="Unexpected Gemini response shape")
 
+def get_emotion(text: str):
+	json_prompt = f"""
+	Analyze the dominant emotion of the following text.
+
+	Respond with ONLY a JSON object in the following format:
+	{{"emotion": "primary_emotion", "score": "confidence_score_0.0_to_1.0"}}
+
+	The "emotion" should be one of:
+	[Joy, Sadness, Anger, Fear, Surprise, Disgust]
+
+	Text: "{text}"
+
+	JSON Response:
+	"""
+	try:
+		response = _call_gemini(json_prompt)
+		return response
+		
+	except Exception as e:
+		print(f"An error occurred (check your API key?): {e}")
 
 class EchoRequest(BaseModel):
 	payload: Dict[str, Any]
@@ -136,6 +156,8 @@ async def echo(req: EchoRequest, request: Request):
 		resp = _call_gemini(prompt)
 		logger.info("Gemini raw response: %s", resp)
 		response = extract_gemini_text(resp=resp)
+		emotion = get_emotion(req.payload['query'])
+		print(emotion)
 		return {"echo": response}
 	except RuntimeError as e:
 		logger.exception("Gemini runtime error")
@@ -144,8 +166,8 @@ async def echo(req: EchoRequest, request: Request):
 		logger.exception("Unexpected error while calling Gemini")
 		raise HTTPException(status_code=500, detail="Internal server error")
 
-@app.get("/emotionmap", summary="Returns emotion map for user-id")
-async def emotionmap()
+# @app.get("/emotionmap", summary="Returns emotion map for user-id")
+# async def emotionmap()
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
