@@ -1,6 +1,6 @@
 // src/AppLayout.tsx
 import { useState, useEffect } from "react";
-import { useUser } from "@clerk/clerk-react";
+import { useUser, useSession } from "@clerk/clerk-react";
 import Sidebar, { type JournalItem } from "./components/sideBar";
 import ChatHeader from "./components/ChatHeader";
 import MessageList, { type Message } from "./components/MessageList";
@@ -14,6 +14,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
 // Note: The function is renamed to AppLayout
 export default function AppLayout() {
   const { user } = useUser();
+  // const { session } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [inputText, setInputText] = useState<string>("");
   const [journals, setJournals] = useState<JournalItem[]>([]);
@@ -22,11 +23,14 @@ export default function AppLayout() {
   const [showEmotionMap, setShowEmotionMap] = useState<boolean>(false);
 
   // Get user info from Clerk
-  const username = user?.username || 
-    (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : '') ||
-    user?.primaryEmailAddress?.emailAddress?.split('@')[0] || 
-    'User';
-  const email = user?.primaryEmailAddress?.emailAddress || 'user@example.com';
+  const username =
+    user?.username ||
+    (user?.firstName && user?.lastName
+      ? `${user.firstName} ${user.lastName}`
+      : "") ||
+    user?.primaryEmailAddress?.emailAddress?.split("@")[0] ||
+    "User";
+  const email = user?.primaryEmailAddress?.emailAddress || "user@example.com";
 
   // Initialize journals and messages from localStorage
   useEffect(() => {
@@ -116,6 +120,7 @@ export default function AppLayout() {
           body: JSON.stringify({
             payload: {
               query: userMessageText,
+              Clerk_Session_Id: user?.id || "",
             },
           }),
         });
@@ -201,14 +206,17 @@ export default function AppLayout() {
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <ChatHeader 
-          title={activeJournal?.title || "Journal Chat"} 
+        <ChatHeader
+          title={activeJournal?.title || "Journal Chat"}
           username={username}
           email={email}
         />
-        
+
         {showEmotionMap ? (
-          <div className="flex-1 overflow-y-auto p-8 flex items-center justify-center" style={{ backgroundColor: "#F8F9FA" }}>
+          <div
+            className="flex-1 overflow-y-auto p-8 flex items-center justify-center"
+            style={{ backgroundColor: "#F8F9FA" }}
+          >
             <div className="w-full max-w-4xl">
               <button
                 onClick={() => setShowEmotionMap(false)}

@@ -173,22 +173,6 @@ const ChatInput: React.FC<ChatInputProps> = ({
               <div className="py-1">
                 <button
                   onClick={() => {
-                    console.log("Export to PDF clicked");
-                    setShowToolsDropdown(false);
-                  }}
-                  className="w-full text-left px-4 py-2 transition-colors"
-                  style={{ color: "#00796B" }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#f0f9ff";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "white";
-                  }}
-                >
-                  📄 Export to PDF
-                </button>
-                <button
-                  onClick={() => {
                     onShowEmotionMap?.();
                     setShowToolsDropdown(false);
                   }}

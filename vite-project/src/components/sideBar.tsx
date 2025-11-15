@@ -41,9 +41,12 @@ function Sidebar({
       >
         {/* Logo (only shown when open) */}
         {isOpen && (
-          <h1 className="text-2xl font-semibold" style={{ color: "#00796B" }}>
+          <h2
+            className="text-lg font-semibold truncate"
+            style={{ color: "#00796B" }}
+          >
             EchoMind
-          </h1>
+          </h2>
         )}
 
         {/* Toggle Button */}
@@ -130,12 +133,12 @@ function Sidebar({
             >
               {/* Show text when open, dot when collapsed */}
               {isOpen ? (
-                <span className="overflow-hidden text-ellipsis">
+                <span className="overflow-hidden text-ellipsis text-sm">
                   {item.title}
                 </span>
               ) : (
                 <div
-                  className="w-2 h-2 rounded-full"
+                  className="w-1.5 h-1.5 rounded-full"
                   style={{
                     backgroundColor: activeId === item.id ? "white" : "#78909C",
                   }}

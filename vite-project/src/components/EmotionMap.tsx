@@ -1,5 +1,6 @@
 // EmotionMap.tsx
 import React, { useEffect, useRef, useState } from "react";
+import { useUser, useSession } from "@clerk/clerk-react";
 import {
   Chart,
   RadarController,
@@ -49,6 +50,7 @@ const EmotionMap: React.FC<EmotionMapProps> = ({ userId }) => {
   const [emotionData, setEmotionData] = useState<EmotionData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  // const { session } = useSession();
 
   // Fetch emotion data from backend
   useEffect(() => {
@@ -58,9 +60,7 @@ const EmotionMap: React.FC<EmotionMapProps> = ({ userId }) => {
 
       try {
         // Construct the API endpoint - adjust the path according to your backend
-        const endpoint = userId
-          ? `${BACKEND_URL}/api/emotions/${userId}`
-          : `${BACKEND_URL}/api/emotions`;
+        const endpoint = `${BACKEND_URL}/emotionmap/${userId}`;
 
         const response = await fetch(endpoint, {
           method: "GET",
@@ -73,28 +73,39 @@ const EmotionMap: React.FC<EmotionMapProps> = ({ userId }) => {
           throw new Error(`Failed to fetch emotion data: ${response.status}`);
         }
 
-        const data: EmotionResponse[] = await response.json();
+        const dataAsObject: Record<string, number> = await response.json();
 
-        // Transform array response to EmotionData object
+        // const dataAsArray: EmotionResponse[] = Object.keys(dataAsObject).map(
+        //   (emotion) => {
+        //     return {
+        //       emotion: emotion,
+        //       count: dataAsObject[emotion],
+        //     };
+        //   }
+        // );
+
+        // // const data: EmotionResponse[] = await response.json();
+
+        // // Transform array response to EmotionData object
         const emotions: EmotionData = {
-          joy: 0,
-          sadness: 0,
-          anger: 0,
-          fear: 0,
-          surprise: 0,
-          disgust: 0,
+          joy: dataAsObject.Joy || 0,
+          sadness: dataAsObject.Sadness || 0,
+          anger: dataAsObject.Anger || 0,
+          fear: dataAsObject.Fear || 0,
+          surprise: dataAsObject.Surprise || 0,
+          disgust: dataAsObject.Disgust || 0,
         };
 
-        // Parse the response array and map emotions to scores
-        data.forEach((item) => {
-          const emotionName = item.emotion.toLowerCase() as keyof EmotionData;
-          const score = parseFloat(item.score) * 10; // Convert 0-1 scale to 0-10
+        // // Parse the response array and map emotions to scores
+        // data.forEach((item) => {
+        //   const emotionName = item.emotion.toLowerCase() as keyof EmotionData;
+        //   const score = parseFloat(item.score) * 10; // Convert 0-1 scale to 0-10
 
-          if (emotionName in emotions) {
-            emotions[emotionName] = score;
-          }
-        });
-
+        //   if (emotionName in emotions) {
+        //     emotions[emotionName] = score;
+        //   }
+        // });
+        console.log(dataAsObject);
         setEmotionData(emotions);
       } catch (err) {
         console.error("Error fetching emotion data:", err);
